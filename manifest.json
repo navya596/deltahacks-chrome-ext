@@ -1,11 +1,11 @@
 {
-    "name": "Upcoming Toronto Concerts",
+    "name": "Plainly",
     "version": "1.0.0",
-    "description": "This is an extension to look up concerts coming to Toronto",
+    "description": "This is an extension to simplify complex text to simple language for a regular reader",
     "manifest_version": 3,
-    "author": "Tiffany J",
+    "author": "Navya Ahuja, Rithika Seenivasan, Saryu Rawaley",
     "action": {
         "default_popup": "index.html",
-        "default_title": "Upcoming Toronto Concerts"
+        "default_title": "Plainly Chrome Extension"
     }
 }
