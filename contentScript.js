@@ -1,2 +1,2 @@
 
-  console.log("Content script received: ")
+  //console.log("Content script received: ")

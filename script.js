@@ -1,5 +1,10 @@
+let oldDocument = null;
+let contentScript = '';
+let docDone = false;
+let newLevel = 4; 
 
-let newLevel = 2; 
+
+
 async function answerQuestion(question) {
 
     const apiKey = "Cfo9vnvLxJxeECFKIMVgqcmNJhiWwBDqBnsbhruV";
@@ -14,8 +19,8 @@ async function answerQuestion(question) {
         body: JSON.stringify({
             model: "command-r-plus", 
             messages: [
-                { role: "user", content: text }, 
-                { role: "system", content: `Answer the following question, keeping your answer as str` } // Instruction to the assistant
+                { role: "user", content: question }, 
+                { role: "system", content: `Answer the following question, keeping your answer below at most 80 words and as straightforward as you can given the following information ${contentScript}` } // Instruction to the assistant
             ]
         })
     });
@@ -26,62 +31,55 @@ async function answerQuestion(question) {
     
 } 
 
-async function simplifyText(text, difficultyLevel, newLevel) {
-
-    const apiKey = "Cfo9vnvLxJxeECFKIMVgqcmNJhiWwBDqBnsbhruV";
-    const endpoint = "https://api.cohere.com/v2/chat";
-
-    const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-            model: "command-r-plus", 
-            messages: [
-                { role: "user", content: text }, 
-                { role: "system", content: `The following text is at a difficulty level of ${difficultyLevel} on the coleman liau index on a 16 point scale. Convert it to ${newLevel} on the scale and preserve the length.` } // Instruction to the assistant
-            ]
-        })
-    });
-
-    const data = await response.json();
-    console.log(data.message.content[0].text);
-    return data.message.content[0].text;
-}
 
 async function scrapeData() {
+    if (!docDone) {
+        docDone = true;
+        oldDocument = document.documentElement.innerHTML;
+    }
+    // Get the current active tab URL using Chrome's tabs API
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const url = tab.url;
+
     
-    const url = window.location.href;
+    
+    // Fetch the page content
     const response = await fetch(url);
     const html = await response.text();
 
-
     console.log("URL:" + url);
 
-    const paragraphs = document.querySelectorAll('p');
-
-    paragraphs.forEach(function(paragraph){
-        console.log(paragraph.textContent);
-        let lvl = ColemanLiauIndex(paragraph.innerText);
-        simplifyText(paragraph.innerText, lvl, newLevel) //replace new level with what the user has actually entered before -- user info
-        .then(simplifiedText => {
-            console.log("Simplified Text: ", simplifiedText);
-            paragraph.innerText = simplifiedText;
-            //here replace document element text with simplifiedText
-        }).catch(error => {
-            console.error("ERROR WITH DATA ", error);
-        });
-
-
+    // Since we're in the extension context, we need to inject code into the tab
+    // to access the page's DOM
+    const results = await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: processPageContent,
+        args: [newLevel] // Pass any necessary arguments
     });
-
 }
 
-async function ColemanLiauIndex (p){
 
-    console.log("P IS: ", p);
+
+// This function will be injected into the page context
+function processPageContent(newLevel) {
+    console.log("HERE!!");
+    const paragraphs = document.querySelectorAll('p');
+    contentScript = '';
+    
+    
+    paragraphs.forEach(async function(paragraph) {
+        console.log(paragraph.textContent);
+        p = paragraph.innerText;
+        contentScript = contentScript + p;
+
+
+
+
+
+
+
+
+        console.log("P IS: ", p);
 
     let totalSentences = 0;
     let totalWords = 0;
@@ -137,14 +135,90 @@ async function ColemanLiauIndex (p){
          console.log("Medium");
      }
  
-     return index;
+     let lvl = index;
 
+
+
+
+
+        
+        try {
+
+            let  text = paragraph.innerText;
+              let difficultyLevel = lvl; 
+
+
+
+
+
+
+
+
+    const apiKey = "Cfo9vnvLxJxeECFKIMVgqcmNJhiWwBDqBnsbhruV";
+    const endpoint = "https://api.cohere.com/v2/chat";
+
+    const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+            model: "command-r-plus", 
+            messages: [
+                { role: "user", content: text }, 
+                { role: "system", content: `The following text is at a difficulty level of ${difficultyLevel} on the coleman liau index on a 16 point scale. Convert it to ${newLevel} on the scale and preserve the length.` } // Instruction to the assistant
+            ]
+        })
+    });
+
+    const data = await response.json();
+    console.log(data.message.content[0].text);
+    const simplifiedText = data.message.content[0].text;
+
+
+
+
+
+
+            console.log("Simplified Text: ", simplifiedText);
+            paragraph.innerText = simplifiedText;
+        } catch (error) {
+            console.error("ERROR WITH DATA ", error);
+        }
+    });
 }
+
 
 window.onload = () => {
     const complexitySlider = document.getElementById("complexitySlider");
-    complexitySlider.addEventListener("input", (value) => {
+    complexitySlider.addEventListener("input", async (value) => {
         console.log("test: " + complexitySlider.value);
-        scrapeData();
+        if (complexitySlider.value == 1) {
+            if (newLevel < complexitySlider.value) {
+                return;
+            }
+            newLevel = 1;
+            scrapeData();
+        } else if (complexitySlider.value == 2) {
+            if (newLevel < complexitySlider.value) {
+                return;
+            }
+            newLevel = 4;
+            scrapeData();
+        } else if (complexitySlider.value == 3) {
+            if (newLevel < complexitySlider.value) {
+                return;
+            }
+            newLevel = 7;
+            scrapeData();
+        } else {
+
+            // Reset the document back to its original state using scripting
+            chrome.tabs.reload();
+            newLevel = 16;
+
+        }
     });
 }
+
