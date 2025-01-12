@@ -71,13 +71,6 @@ async function simplifyText(text, difficultyLevel, newLevel) {
     return data.message.content[0].text;
 }
 
-simplifyText("hello my name is wania and tell me all about climate change")
-.then(simplifiedText => {
-    console.log("Simplified Text: ", simplifiedText);
-}).catch(error => {
-    console.error("ERROR WITH DATA ", error);
-})
-
 async function scrapeData(){
     
     const url = window.location.href
@@ -85,23 +78,33 @@ async function scrapeData(){
     const html = await response.text();
 
     const parser = new DOMParser();
-    const document = parser.parserFromString(html, "text/html");
+    const doc = parser.parseFromString(html, "text/html");
 
-    const webTitle = document.querySelectorAll('h1');
+    const webTitle = doc.querySelectorAll('h1');
     webTitle.forEach(function(title) {
         console.log(title.textContent);
     });
     
-    const headers = document.querySelectorAll('h2,h3,h4,h5,h6');
+    const headers = doc.querySelectorAll('h2,h3,h4,h5,h6');
     headers.forEach(function(header){
         console.log(header.textContent);
     });
 
-    let p = ""
-    const paragraphs = document.querySelectorAll('p');
+    const paragraphs = doc.querySelectorAll('p');
     paragraphs.forEach(function(paragraph){
         console.log(paragraph.textContent);
-        p += paragraph.textContent + ' '
+        let lvl = ColemanLiauIndex(paragraph);
+        const newLevel = 2;
+        simplifyText(paragraph, lvl, newLevel) //replace new level with what the user has actually entered before -- user info
+        .then(simplifiedText => {
+            console.log("Simplified Text: ", simplifiedText);
+            paragraph.textContent = simplifiedText;
+            //here replace document element text with simplifiedText
+        }).catch(error => {
+            console.error("ERROR WITH DATA ", error);
+        });
+
+
     });
 
 }
@@ -159,3 +162,5 @@ async function ColemanLiauIndex (p){
      return index;
 
 }
+
+scrapeData(); 
