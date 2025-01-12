@@ -12,7 +12,7 @@ Throughout this project, every team member gained valuable new skills. We explor
 ## What's Next for Simplifi 
 We envision Simplifi as a scalable Chrome extension with the potential to tackle a broader range of accessibility challenges. One key improvement we plan to introduce is a text-to-speech feature, allowing users to have the simplified text read aloud directly from the webpage. This enhancement would make Simplifi even more inclusive, catering to users who benefit from auditory learning or have visual impairments.
 
-SetUp
+##SetUp
 - Fork the Repository
 - Open chrome developer tools and enable developer mode 
 - In chrome developer tools load unpacked
