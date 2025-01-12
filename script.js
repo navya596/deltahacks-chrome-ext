@@ -1,25 +1,5 @@
- /*
-    const { CohereClientV2 } = require('cohere-ai');
 
-    const cohere = new CohereClientV2({
-    token: '<<apiKey>>',
-    });
-
-    (async () => {
-    const response = await cohere.chat({
-        model: 'command-r-plus',
-        messages: [
-        {
-            role: 'user',
-            content: 'hello world!',
-        },
-        ],
-    });
-
-    console.log(response);
-    })();
-    */
-
+let newLevel = 2; 
 async function answerQuestion(question) {
 
     const apiKey = "Cfo9vnvLxJxeECFKIMVgqcmNJhiWwBDqBnsbhruV";
@@ -71,34 +51,24 @@ async function simplifyText(text, difficultyLevel, newLevel) {
     return data.message.content[0].text;
 }
 
-async function scrapeData(){
+async function scrapeData() {
     
-    const url = window.location.href
+    const url = window.location.href;
     const response = await fetch(url);
     const html = await response.text();
 
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, "text/html");
 
-    const webTitle = doc.querySelectorAll('h1');
-    webTitle.forEach(function(title) {
-        console.log(title.textContent);
-    });
-    
-    const headers = doc.querySelectorAll('h2,h3,h4,h5,h6');
-    headers.forEach(function(header){
-        console.log(header.textContent);
-    });
+    console.log("URL:" + url);
 
-    const paragraphs = doc.querySelectorAll('p');
+    const paragraphs = document.querySelectorAll('p');
+
     paragraphs.forEach(function(paragraph){
         console.log(paragraph.textContent);
-        let lvl = ColemanLiauIndex(paragraph);
-        const newLevel = 2;
-        simplifyText(paragraph, lvl, newLevel) //replace new level with what the user has actually entered before -- user info
+        let lvl = ColemanLiauIndex(paragraph.innerText);
+        simplifyText(paragraph.innerText, lvl, newLevel) //replace new level with what the user has actually entered before -- user info
         .then(simplifiedText => {
             console.log("Simplified Text: ", simplifiedText);
-            paragraph.textContent = simplifiedText;
+            paragraph.innerText = simplifiedText;
             //here replace document element text with simplifiedText
         }).catch(error => {
             console.error("ERROR WITH DATA ", error);
@@ -110,6 +80,8 @@ async function scrapeData(){
 }
 
 async function ColemanLiauIndex (p){
+
+    console.log("P IS: ", p);
 
     let totalSentences = 0;
     let totalWords = 0;
@@ -149,6 +121,12 @@ async function ColemanLiauIndex (p){
  
      // Compute the Coleman-Liau index
      let index = Math.round(0.0588 * L - 0.296 * S - 15.8);
+
+     console.log(L)
+     console.log(S)
+     console.log(index)
+
+     console.log("Index: ", index);
  
      // Categorize the difficulty based on the index
      if (index >= 10) {
@@ -163,4 +141,10 @@ async function ColemanLiauIndex (p){
 
 }
 
-scrapeData(); 
+window.onload = () => {
+    const complexitySlider = document.getElementById("complexitySlider");
+    complexitySlider.addEventListener("input", (value) => {
+        console.log("test: " + complexitySlider.value);
+        scrapeData();
+    });
+}

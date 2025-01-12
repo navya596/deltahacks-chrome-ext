@@ -3,9 +3,15 @@
     "version": "1.0.0",
     "description": "This is an extension to simplify complex text to simple language for a regular reader",
     "manifest_version": 3,
-    "author": "Navya Ahuja, Rithika Seenivasan, Saryu Rawaley",
+    "author": "Navya Ahuja, Rithika Seenivasan, Saryu Rawaley", 
+    "permissions": ["activeTab", "declarativeContent", "storage", "tabs"],
+    "host_permissions": ["<all_urls>"],
     "action": {
         "default_popup": "index.html",
         "default_title": "Plainly Chrome Extension"
+    },
+    "background": {
+      "service_worker": "background.js",
+      "type": "module"
     }
-}
+}    
